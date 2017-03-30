@@ -24,6 +24,8 @@ def format_time(time):
     return datetime.datetime.strptime(time, '%Y-%m-%dT%H:%M:%SZ').strftime('%Y-%m-%d %H:%M:%S UTC')
 
 __dynamoClient = boto3.client('dynamodb')
+textblockStart = "```\n"
+textblockEnd = "\n```"
 
 def handler(event, context):
     print event
@@ -33,8 +35,9 @@ def handler(event, context):
     credentials = Credentials.new_from_json(credentialJson)
     http_auth = credentials.authorize(httplib2.Http())
     calendar = build('calendar', 'v3', http=http_auth)
-    content = getConfigValue('header')
-    footer = getConfigValue('footer')
+    header = getConfigValue('header')
+    content = textblockStart + header
+    footer = getConfigValue('footer') + textblockEnd
     for item in calendar.events().list(calendarId=calendarId, timeMin=now(), timeMax=week(), singleEvents=True, orderBy='startTime').execute()['items']:
         itemContent = ""
         itemContent = itemContent + 'Title:\t' + item['summary'] + '\n'
@@ -44,8 +47,8 @@ def handler(event, context):
             itemContent = itemContent + item['description'] + '\n'
         itemContent = itemContent + '\n'
         if ((len(itemContent) + len(content) + len(footer)) >= 2000):
-            r = requests.post(discordWebhookUri, data={'content': content})
-            content = itemContent
+            r = requests.post(discordWebhookUri, data={'content': content + textblockEnd})
+            content = textblockStart + itemContent
         else:
             content = content + itemContent
     r = requests.post(discordWebhookUri, data={'content': content + footer})
