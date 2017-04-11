@@ -59,7 +59,7 @@ def handle(event, context):
             'expiration': expirationUnix
             }
     try:
-        print calendar.events().watch(calendarId=__calendarId, body=body).execute()
+        print calendar.events().watch(calendarId=calendarId, body=body).execute()
     except Exception as e:
         deleteConfigValue('GoogleCalendarWatchId')
         raise e
